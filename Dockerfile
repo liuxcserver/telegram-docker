@@ -5,22 +5,21 @@ FROM debian:stable-slim
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
-    # 设置 VNC 默认密码
     VNC_PASSWORD=123456 \
-    # 设置分辨率
     RESOLUTION=1280x720
 
 # 安装必要的软件
-# 修正点1: 移除了 tigervnc-standalone-server (该包在某些Debian源中不存在)
-# 修正点2: 移除了 libxcb-icccm4 (通常包含在 libxcb-util0 中，或者包名已变)
-# 修正点3: 增加了 wget (用于下载Telegram) 和 xvfb (作为备用依赖)
+# 修正点1: 修复了换行符 \ 缺失导致的语法错误
+# 修正点2: 移除了有问题的 standalone-server，改用 tigervnc-primeserver 或直接安装主包
+# 修正点3: 移除了可能不存在的旧版 XCB 库 (如 icccm4)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+        # --- 桌面与VNC环境 ---
         xfce4 \
         xfce4-goodies \
         tigervnc-common \
-        tigervnc-scraping-server \ # 或者直接使用 tigervnc-xorg-extension
-        # Telegram 依赖库 (修正了部分库名)
+        tigervnc-primeserver \
+        # --- Telegram 依赖库 (修复了库名) ---
         libgtk-3-0 \
         libnotify4 \
         libgconf-2-4 \
@@ -31,21 +30,20 @@ RUN apt-get update && \
         libatspi2.0-0 \
         libsecret-1-0 \
         libxkbcommon0 \
-        # 修正: 使用更通用的 xcb 库或安装 libxcb-util1 的依赖
+        # --- XCB 核心库 (使用通用名称) ---
         libxcb-util1 \
         libxcb-randr0 \
         libxcb-cursor0 \
         libxcb-xinerama0 \
         libxcb-xfixes0 \
-        # 其他工具
+        # --- 其他工具 ---
         curl \
         wget \
         unzip \
         python3 \
         python3-websockify \
         fonts-wqy-zenhei \
-        fonts-wqy-microhei \
-        xvfb && \
+        fonts-wqy-microhei && \
     rm -rf /var/lib/apt/lists/*
 
 # 下载并安装 noVNC
@@ -67,7 +65,7 @@ RUN mkdir -p /root/.vnc && \
     echo "startxfce4 &" > /root/.vnc/xstartup && \
     chmod +x /root/.vnc/xstartup
 
-# 暴露端口 (6080用于网页访问, 5901用于VNC直连)
+# 暴露端口
 EXPOSE 6080 5901
 
 # 容器启动时运行的命令
