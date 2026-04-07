@@ -1,4 +1,4 @@
-# 使用 Debian Stable 作为基础系统
+# 使用 Debian Stable (Bookworm)
 FROM debian:stable-slim
 
 # 设置环境变量
@@ -9,20 +9,21 @@ ENV DEBIAN_FRONTEND=noninteractive \
     RESOLUTION=1280x720
 
 # 安装必要的软件
-# 修正点1: 修复了换行符 \ 缺失导致的语法错误
-# 修正点2: 移除了有问题的 standalone-server，改用 tigervnc-primeserver 或直接安装主包
-# 修正点3: 移除了可能不存在的旧版 XCB 库 (如 icccm4)
+# 修正点：
+# 1. 使用 tigervnc-standalone-server 替代 primeserver (兼容性问题)
+# 2. 移除容易报错的特定 xcb 库，改用基础库
+# 3. 增加 Telegram 必须的 Qt5 和 GStreamer 多媒体库
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        # --- 桌面与VNC环境 ---
+        # --- 桌面与 VNC ---
         xfce4 \
         xfce4-goodies \
         tigervnc-common \
-        tigervnc-primeserver \
-        # --- Telegram 依赖库 (修复了库名) ---
+        tigervnc-standalone-server \
+        dbus-x11 \
+        # --- Telegram 核心依赖 (Qt5 & Multimedia) ---
         libgtk-3-0 \
         libnotify4 \
-        libgconf-2-4 \
         libnss3 \
         libxss1 \
         libasound2 \
@@ -30,13 +31,21 @@ RUN apt-get update && \
         libatspi2.0-0 \
         libsecret-1-0 \
         libxkbcommon0 \
-        # --- XCB 核心库 (使用通用名称) ---
-        libxcb-util1 \
+        # Qt5 基础库 (Telegram 是 Qt 应用)
+        libgl1 \
+        libegl1 \
+        libxcb-icccm4 \
+        libxcb-image0 \
+        libxcb-keysyms1 \
         libxcb-randr0 \
-        libxcb-cursor0 \
+        libxcb-render-util0 \
         libxcb-xinerama0 \
+        libxcb-xinput0 \
         libxcb-xfixes0 \
-        # --- 其他工具 ---
+        # 多媒体支持 (防止视频/语音无法播放)
+        gstreamer1.0-pulseaudio \
+        gstreamer1.0-libav \
+        # --- 工具与字体 ---
         curl \
         wget \
         unzip \
@@ -68,5 +77,5 @@ RUN mkdir -p /root/.vnc && \
 # 暴露端口
 EXPOSE 6080 5901
 
-# 容器启动时运行的命令
+# 容器启动命令
 CMD ["/start.sh"]
