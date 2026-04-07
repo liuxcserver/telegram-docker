@@ -1,29 +1,26 @@
+version: '3.8'
+
 services:
-  telegram:
-    # 指定镜像地址
-    image: "ghcr.io/liuxcserver/telegram-docker:latest"
-    # 容器名称
+  telegram-docker:
+    image: ghcr.io/liuxcserver/telegram-docker:master
     container_name: telegram-docker
-    # 网络模式设置为 bridge
-    network_mode: bridge
-
-    # 环境变量配置
-    # 1. VNC_PASSWORD: 设置 VNC 连接密码
-    environment:
-      - VNC_PASSWD=123456  # 默认密码，可修改
-
-    # 端口映射
+    restart: always
     ports:
-      - "46080:6080"
-
-    # 数据卷挂载
-    # 1. Wine 数据目录: 持久化 Telegram 的登录状态和聊天记录
-    # 2. 下载目录: 共享文件夹，方便在主机和容器间传输文件
+      - "46080:6080"   # noVNC Web 访问端口
+    environment:
+      # 在这里设置 VNC 密码，不设置则默认为 123456
+      - VNC_PASSWORD=123456
+      # 设置时区，避免日志时间不对
+      - TZ=Asia/Shanghai
     volumes:
-      - ./telegram/config:/root/.local/share/TelegramDesktop  # 登录信息
-      - "./telegram/data:/root/Telegram Desktop"            # 下载文件
-    # 重启策略：除非手动停止，否则总是重启（保证服务常驻）
-    restart: unless-stopped
-    tmpfs:
-      - /tmp
-
+      # 1. 持久化 Telegram 应用数据 (聊天记录、登录信息)
+      - ./data/telegram-config:/root/.local/share/TelegramDesktop
+      
+      # 2. 挂载下载目录 (方便在宿主机直接查看下载的文件)
+      - ./data/downloads:/root/Downloads
+      
+      # 3. (可选) 持久化 VNC 密码配置
+      - ./data/vnc-config:/root/.vnc
+    # 增加共享内存大小，防止浏览器或桌面渲染异常
+    shm_size: '2gb'
+    network_mode: bridge
