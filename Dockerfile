@@ -1,6 +1,13 @@
 FROM ubuntu:22.04
 
+# --- 关键修复：设置非交互式安装模式 ---
+# 这行代码必须放在最前面，确保 apt-get 不会弹出键盘布局选择等交互界面
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
 # 1. 安装桌面环境、VNC服务器、Telegram及其他必要工具
+# 我们显式安装 locales 并生成语言环境，防止 Telegram 启动报错
 RUN apt-get update && \
     apt-get install -y \
     xfce4 \
