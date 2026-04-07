@@ -37,7 +37,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # 1. 创建目录
     mkdir -p ${TELEGRAM_HOME} \
     # 2. 使用正确的直接下载链接 (linux_x64) 并解压
-    && wget -qO- https://telegram.org/dl/desktop/linux_x64 | tar -xJ -C ${TELEGRAM_HOME} --strip-components=1 \
+    && wget -qO- https://telegram.org/dl/desktop/linux | tar -xJ -C ${TELEGRAM_HOME} --strip-components=1 \
     # 3. 创建软链接
     && ln -sf ${TELEGRAM_HOME}/Telegram /usr/bin/telegram \
     \
