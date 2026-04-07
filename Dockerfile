@@ -11,16 +11,16 @@ ENV DEBIAN_FRONTEND=noninteractive \
     RESOLUTION=1280x720
 
 # 安装必要的软件
-# 1. 安装基础桌面环境 (XFCE) 和 VNC 服务
-# 2. 安装 Telegram 依赖库 (GTK, Freetype, FFmpeg 等)
-# 3. 安装 noVNC 及其依赖 (Python3)
+# 修正点1: 移除了 tigervnc-standalone-server (该包在某些Debian源中不存在)
+# 修正点2: 移除了 libxcb-icccm4 (通常包含在 libxcb-util0 中，或者包名已变)
+# 修正点3: 增加了 wget (用于下载Telegram) 和 xvfb (作为备用依赖)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         xfce4 \
         xfce4-goodies \
-        tigervnc-standalone-server \
         tigervnc-common \
-        # Telegram 依赖库
+        tigervnc-scraping-server \ # 或者直接使用 tigervnc-xorg-extension
+        # Telegram 依赖库 (修正了部分库名)
         libgtk-3-0 \
         libnotify4 \
         libgconf-2-4 \
@@ -31,7 +31,7 @@ RUN apt-get update && \
         libatspi2.0-0 \
         libsecret-1-0 \
         libxkbcommon0 \
-        libxcb-icccm4 \
+        # 修正: 使用更通用的 xcb 库或安装 libxcb-util1 的依赖
         libxcb-util1 \
         libxcb-randr0 \
         libxcb-cursor0 \
@@ -39,11 +39,13 @@ RUN apt-get update && \
         libxcb-xfixes0 \
         # 其他工具
         curl \
+        wget \
         unzip \
         python3 \
         python3-websockify \
         fonts-wqy-zenhei \
-        fonts-wqy-microhei && \
+        fonts-wqy-microhei \
+        xvfb && \
     rm -rf /var/lib/apt/lists/*
 
 # 下载并安装 noVNC
@@ -51,7 +53,6 @@ RUN git clone --depth 1 https://github.com/novnc/noVNC.git /opt/noVNC && \
     git clone --depth 1 https://github.com/novnc/websockify /opt/noVNC/utils/websockify
 
 # 下载 Telegram Linux 官方版本
-# Telegram Linux 是静态编译的，直接解压即可运行
 RUN curl -L -o /tmp/telegram.tar.xz https://telegram.org/dl/desktop/linux && \
     mkdir -p /opt/telegram && \
     tar -xf /tmp/telegram.tar.xz -C /opt/telegram --strip-components=1 && \
