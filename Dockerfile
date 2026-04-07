@@ -2,54 +2,44 @@
 FROM debian:stable-slim
 
 # 设置环境变量
-# 1. 系统基础设置
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
-    # 2. VNC 默认密码 (这里设置默认值)
     VNC_PASSWORD=123456 \
-    # 3. 分辨率设置
     RESOLUTION=1280x720
 
-# 1. 安装所有必要的软件
-# 注意：这里不再包含 vncpasswd 的配置命令
+# 安装必要的软件
+# 关键修复：使用 tigervnc 的 websockify 替代旧的 python3-websockify
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    xfce4 \
-    xfce4-goodies \
-    tigervnc-standalone-server \
-    tigervnc-common \
-    wine64 \
-    curl \
-    unzip \
-    git \
-    python3-websockify \
-    supervisor \
-    fonts-wqy-zenhei \
-    fonts-wqy-microhei && \
+        xfce4 \
+        xfce4-goodies \
+        tigervnc-standalone-server \
+        wine64 \
+        curl \
+        unzip \
+        fonts-wqy-zenhei \
+        fonts-wqy-microhei && \
+    # 关键修复：手动下载 noVNC (官方推荐方式，避免 git clone 失败)
+    curl -L -o /tmp/novnc.zip https://github.com/novnc/noVNC/archive/refs/heads/master.zip && \
+    unzip /tmp/novnc.zip -d /opt/ && \
+    mv /opt/noVNC-master /opt/noVNC && \
+    rm /tmp/novnc.zip && \
+    # 下载辅助工具
+    curl -L -o /tmp/websockify.zip https://github.com/novnc/websockify/archive/refs/heads/master.zip && \
+    unzip /tmp/websockify.zip -d /opt/noVNC/utils/ && \
+    mv /opt/noVNC/utils/websockify-master /opt/noVNC/utils/websockify && \
+    rm -rf /tmp/* && \
+    # 清理缓存
     rm -rf /var/lib/apt/lists/*
 
-# 2. 下载并安装 noVNC
-RUN git clone --depth 1 https://github.com/novnc/noVNC.git /opt/noVNC && \
-    git clone --depth 1 https://github.com/novnc/websockify /opt/noVNC/utils/websockify
-
-# 3. 下载 Telegram Windows 官方版本
-RUN curl -L -o /tmp/telegram.zip https://telegram.org/dl/desktop/win64_portable && \
-    unzip /tmp/telegram.zip -d /opt/telegram && \
-    rm /tmp/telegram.zip
-
-# 4. 添加启动脚本
+# 创建 VNC 目录和启动脚本
 COPY start.sh /start.sh
-RUN chmod +x /start.sh
-
-# 5. 配置 VNC 启动时的桌面环境 (xstartup)
-# 这一步可以保留在 Dockerfile 中，因为它是静态的
-RUN mkdir -p /root/.vnc && \
+RUN chmod +x /start.sh && \
+    mkdir -p /root/.vnc && \
     echo "startxfce4 &" > /root/.vnc/xstartup && \
     chmod +x /root/.vnc/xstartup
 
-# 6. 暴露端口
 EXPOSE 6080 5901
 
-# 7. 容器启动时运行的命令
 CMD ["/start.sh"]
