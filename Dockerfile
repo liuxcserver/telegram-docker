@@ -1,57 +1,70 @@
 FROM ubuntu:22.04
 
-# 设置环境变量 (关键修复点)
-ENV DEBIAN_FRONTEND=noninteractive \
-    DISPLAY=:1 \
-    VNC_PORT=5901 \
-    NO_VNC_PORT=6901 \
-    VNC_PASSWD=123456 \
-    NO_VNC_HOME=/opt/noVNC \
-    TELEGRAM_HOME=/opt/Telegram
-
-# 安装依赖并配置应用 (关键修复点在 Telegram 下载命令)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    wget \
-    curl \
-    git \
-    ca-certificates \
-    xvfb \
+# 1. 安装桌面环境、VNC服务器、Telegram及其他必要工具
+RUN apt-get update && \
+    apt-get install -y \
+    xfce4 \
+    xfce4-goodies \
     tigervnc-standalone-server \
-    tigervnc-xorg-extension \
-    openbox \
-    libx11-xcb1 \
-    libxcb-icccm4 \
-    libxcb-image0 \
-    libxcb-keysyms1 \
-    libxcb-randr0 \
-    libxcb-render-util0 \
-    libxcb-sync1 \
-    libxcb-xfixes0 \
-    libxcb-shape0 \
-    libxkbcommon-x11-0 \
-    libgl1-mesa-glx \
-    libpulse0 \
-    libasound2 \
-    && \
-    # --- 修复 Telegram 安装 ---
-    # 1. 创建目录
-    mkdir -p ${TELEGRAM_HOME} \
-    # 2. 使用正确的直接下载链接 (linux_x64) 并解压
-    && wget -qO- https://telegram.org/dl/desktop/linux | tar -xJ -C ${TELEGRAM_HOME} --strip-components=1 \
-    # 3. 创建软链接
-    && ln -sf ${TELEGRAM_HOME}/Telegram /usr/bin/telegram \
-    \
-    # --- 配置 noVNC ---
-    && git clone --depth 1 https://github.com/novnc/noVNC.git ${NO_VNC_HOME} \
-    && git clone --depth 1 https://github.com/novnc/websockify.git ${NO_VNC_HOME}/utils/websockify \
-    && ln -s ${NO_VNC_HOME}/vnc.html ${NO_VNC_HOME}/index.html \
-    \
-    # --- 清理 ---
-    && apt-get clean \
+    tigervnc-common \
+    telegram-desktop \
+    supervisor \
+    curl \
+    wget \
+    locales \
     && rm -rf /var/lib/apt/lists/*
 
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
+# 2. 创建VNC配置目录
+RUN mkdir -p /root/.vnc
 
-EXPOSE 6901
-CMD ["/start.sh"]
+# 3. 创建VNC启动脚本 (xstartup)
+# 这个脚本会在VNC会话启动时运行，用于启动XFCE桌面
+COPY <<EOF /root/.vnc/xstartup
+#!/bin/bash
+unset SESSION_MANAGER
+unset DBUS_SESSION_BUS_ADDRESS
+exec startxfce4
+EOF
+RUN chmod +x /root/.vnc/xstartup
+
+# 4. 创建VNC密码设置脚本
+# 该脚本会检查环境变量VNC_PASSWORD，如果存在则使用它，否则使用默认密码123456
+COPY <<'EOF' /set_vnc_password.sh
+#!/bin/bash
+# 优先使用环境变量指定的密码，如果没有则使用默认密码
+VNC_PASS="${VNC_PASSWORD:-123456}"
+
+# 使用非交互方式设置VNC密码
+echo "$VNC_PASS" | vncpasswd -f > /root/.vnc/passwd
+chmod 600 /root/.vnc/passwd
+echo "VNC password has been set."
+EOF
+RUN chmod +x /set_vnc_password.sh
+
+# 5. 创建Supervisor配置文件
+# Supervisor用于在容器内同时管理VNC和Telegram等多个进程
+COPY <<EOF /etc/supervisor/conf.d/supervisord.conf
+[supervisord]
+nodaemon=true
+
+# 启动VNC服务器
+[program:vnc]
+command=/bin/bash -c "/set_vnc_password.sh && vncserver :1 -geometry 1920x1080 -depth 24 -SecurityTypes None"
+autorestart=true
+stderr_logfile=/var/log/vnc.err.log
+stdout_logfile=/var/log/vnc.out.log
+
+# 启动Telegram
+[program:telegram]
+command=/usr/bin/telegram-desktop
+autorestart=true
+stderr_logfile=/var/log/telegram.err.log
+stdout_logfile=/var/log/telegram.out.log
+environment=HOME="/root",USER="root"
+EOF
+
+# 6. 暴露VNC服务端口
+EXPOSE 5901
+
+# 7. 设置容器启动命令
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
