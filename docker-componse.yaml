@@ -21,7 +21,7 @@ services:
     # 2. 下载目录: 共享文件夹，方便在主机和容器间传输文件
     volumes:
       - ./telegram/config:/root/.local/share/TelegramDesktop  # 登录信息
-      - ./telegram/data:/root/Telegram\ Desktop                # 下载文件
+      - "./telegram/data:/root/Telegram Desktop"            # 下载文件
     # 重启策略：除非手动停止，否则总是重启（保证服务常驻）
     restart: unless-stopped
     tmpfs:
