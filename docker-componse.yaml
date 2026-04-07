@@ -9,13 +9,10 @@ services:
 
     # 环境变量配置
     # 1. VNC_PASSWORD: 设置 VNC 连接密码
-    # 2. RESOLUTION: 设置桌面分辨率为 1920x1080
     environment:
-      - VNC_PASSWORD=123456
-      - RESOLUTION=1920x1080
+      - VNC_PASSWD=123456  # 默认密码，可修改
 
     # 端口映射
-    # 将容器内的 6080 端口（noVNC 网页端口）映射到主机的 6080 端口
     ports:
       - "46080:6080"
 
@@ -23,8 +20,10 @@ services:
     # 1. Wine 数据目录: 持久化 Telegram 的登录状态和聊天记录
     # 2. 下载目录: 共享文件夹，方便在主机和容器间传输文件
     volumes:
-      - ./wine:/root/.wine
-      - ./Downloads:/root/Downloads
-
+      - ./telegram/config:/root/.local/share/TelegramDesktop  # 登录信息
+      - ./telegram/data:/root/Telegram\ Desktop                # 下载文件
     # 重启策略：除非手动停止，否则总是重启（保证服务常驻）
     restart: unless-stopped
+    tmpfs:
+      - /tmp
+
