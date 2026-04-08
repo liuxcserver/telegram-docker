@@ -1,39 +1,44 @@
 FROM debian:latest
 
-# 设置非交互式环境，避免安装过程中的交互提示
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Shanghai
 
-# 优化后的安装命令
-# 1. 使用 --fix-missing 处理网络波动
-# 2. 使用 --no-install-recommends 减少依赖数量，提高成功率
-RUN apt-get update && apt-get install -y --no-install-recommends --fix-missing \
-    xfce4 \
-    xfce4-goodies \
-    tigervnc-standalone-server \
-    tigervnc-common \
-    novnc \
-    python3-websockify \
-    dbus-x11 \
-    x11-xserver-utils \
-    telegram-desktop \
-    supervisor \
-    fonts-wqy-zenhei \
-    # 清理缓存，减小镜像体积
-    && rm -rf /var/lib/apt/lists/*
+# 1. 更新源 (必须成功)
+RUN apt-get update
 
-# 创建 VNC 目录
-RUN mkdir -p /root/.vnc
+# 2. 安装桌面环境基础 (XFCE4)
+RUN apt-get install -y --no-install-recommends xfce4 && echo "XFCE4 installed"
 
-# 复制配置文件 (确保你的本地文件名和这里一致)
+# 3. 安装桌面插件
+RUN apt-get install -y --no-install-recommends xfce4-goodies && echo "XFCE4 Goodies installed"
+
+# 4. 安装 VNC 核心组件
+RUN apt-get install -y --no-install-recommends tigervnc-standalone-server tigervnc-common && echo "TigerVNC installed"
+
+# 5. 安装 noVNC (Web端VNC)
+RUN apt-get install -y --no-install-recommends novnc python3-websockify && echo "noVNC installed"
+
+# 6. 安装系统工具
+RUN apt-get install -y --no-install-recommends dbus-x11 x11-xserver-utils && echo "System utils installed"
+
+# 7. 安装字体 (中文支持)
+RUN apt-get install -y --no-install-recommends fonts-wqy-zenhei && echo "Fonts installed"
+
+# 8. 安装 Supervisor (进程管理)
+RUN apt-get install -y --no-install-recommends supervisor && echo "Supervisor installed"
+
+# 9. 安装 Telegram (这个包最大，最容易出问题)
+RUN apt-get install -y --no-install-recommends telegram-desktop && echo "Telegram installed"
+
+# 10. 清理缓存 (最后一步)
+RUN rm -rf /var/lib/apt/lists/*
+
+# 复制配置文件 (保持不变)
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY start.sh /start.sh
 
-# 赋予脚本执行权限
 RUN chmod +x /start.sh
 
-# 暴露端口
 EXPOSE 6080 5901
 
-# 启动命令
 CMD ["/start.sh"]
