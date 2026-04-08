@@ -17,7 +17,7 @@ RUN apt-get update && \
     wget \
     tar \
     xvfb \
-    sudo \
+    x11vnc \
     dbus-x11 \
     libgl1-mesa-glx \
     libglib2.0-0 \
@@ -27,22 +27,19 @@ RUN apt-get update && \
     libxfixes3 \
     libxi6 \
     libfontconfig1 \
-    libxcb-icccm4 \
-    libxcb-util1 \
-    libxcb-image0 \
-    libxcb-keysyms1 \
-    libxcb-randr0 \
-    libxcb-render-util0 \
-    libxcb-xinerama0 \
-    libxcb-cursor0 \
-    libx11-xcb1 \
+    libasound2 \
+    libatk1.0-0 \
+    libgtk-3-0 \
     libnss3 \
     libxss1 \
-    libasound2 \
-    && rm -rf /var/lib/apt/lists/*
+    git \
+    python3 \
+    net-tools \
+    supervisor && \
+    rm -rf /var/lib/apt/lists/*
 
 # 安装 TigerVNC Server
-RUN wget -qO- https://twds.dl.sourceforge.net/project/tigervnc/stable/1.16.2/tigervnc-1.16.2.x86_64.tar.gz?viasf=1 | tar xz --strip-components=1 -C /usr/local
+# RUN wget -qO- https://twds.dl.sourceforge.net/project/tigervnc/stable/1.16.2/tigervnc-1.16.2.x86_64.tar.gz?viasf=1 | tar xz --strip-components=1 -C /usr/local
 
 # 安装 noVNC
 RUN git clone https://github.com/novnc/noVNC.git /opt/noVNC && \
