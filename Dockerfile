@@ -32,7 +32,6 @@ RUN apt-get update && \
     libgtk-3-0 \
     libnss3 \
     libxss1 \
-    git \
     python3 \
     net-tools \
     supervisor && \
@@ -41,10 +40,12 @@ RUN apt-get update && \
 # 安装 TigerVNC Server
 # RUN wget -qO- https://twds.dl.sourceforge.net/project/tigervnc/stable/1.16.2/tigervnc-1.16.2.x86_64.tar.gz?viasf=1 | tar xz --strip-components=1 -C /usr/local
 
-# 安装 noVNC
-RUN git clone https://github.com/novnc/noVNC.git /opt/noVNC && \
-    git clone https://github.com/novnc/websockify /opt/noVNC/utils/websockify && \
-    ln -s /opt/noVNC/vnc.html /opt/noVNC/index.html
+# 安装 noVNC (使用 wget 替代 git clone，更可靠)
+RUN cd /tmp && \
+    wget -O noVNC.tar.gz https://github.com/novnc/noVNC/archive/refs/heads/master.tar.gz && \
+    tar -xzf noVNC.tar.gz && \
+    mv noVNC-master /opt/noVNC && \
+    rm noVNC.tar.gz
 
 # 下载并安装 Telegram Desktop
 RUN cd /tmp && \
