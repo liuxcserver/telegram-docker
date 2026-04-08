@@ -6,16 +6,11 @@ ENV DEBIAN_FRONTEND=noninteractive \
     DISPLAY=:1 \
     VNC_PORT=5901 \
     NO_VNC_PORT=6901 \
-    # Telegram 安装包下载地址
-    TELEGRAM_URL=https://telegram.org/dl/desktop/linux \
-    # noVNC 默认密码
     NO_VNC_PASSWD=123456
 
 # 安装依赖
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    curl \
-    wget \
     tar \
     xvfb \
     x11vnc \
@@ -39,24 +34,25 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # 安装 TigerVNC Server
-# RUN wget -qO- https://twds.dl.sourceforge.net/project/tigervnc/stable/1.16.2/tigervnc-1.16.2.x86_64.tar.gz?viasf=1 | tar xz --strip-components=1 -C /usr/local
+COPY tigervnc-1.16.2.x86_64.tar.gz /tmp/tigervnc.tar.gz
+RUN tar xz /tmp/tigervnc.tar.gz --strip-components=1 -C /usr/local
 
 # 安装 noVNC (使用 wget 替代 git clone，更可靠)
 # 2. 安装 noVNC (拆分为多行命令)
-#RUN curl -L -o /tmp/noVNC.tar.gz https://github.com/novnc/noVNC/archive/refs/heads/master.tar.gz
-#RUN tar -xzf /tmp/noVNC.tar.gz -C /opt && mv /opt/noVNC-master /opt/noVNC
-#RUN curl -L -o /tmp/websockify.tar.gz https://github.com/novnc/websockify/archive/refs/heads/master.tar.gz
-#RUN tar -xzf /tmp/websockify.tar.gz -C /opt && mv /opt/websockify-master /opt/noVNC/utils/websockify
-#RUN rm -rf /tmp/noVNC.tar.gz /tmp/websockify.tar.gz
-#RUN ln -s /opt/noVNC/vnc.html /opt/noVNC/index.html
+COPY noVNC-master.tar.gz /tmp/noVNC.tar.gz
+RUN tar -xzf /tmp/noVNC.tar.gz -C /opt && mv /opt/noVNC-master /opt/noVNC
+COPY websockify-master.tar.gz /tmp/websockify.tar.gz
+RUN tar -xzf /tmp/websockify.tar.gz -C /opt && mv /opt/websockify-master /opt/noVNC/utils/websockify
+RUN rm -rf /tmp/noVNC.tar.gz /tmp/websockify.tar.gz
+RUN ln -s /opt/noVNC/vnc.html /opt/noVNC/index.html
 
 # 下载并安装 Telegram Desktop
-#RUN cd /tmp && \
-#    curl -L -o telegram.tar.xz $TELEGRAM_URL && \
-#    tar -xf telegram.tar.xz && \
-#    mv Telegram/ /opt/telegram && \
-#    rm telegram.tar.xz && \
-#    rm -rf Telegram
+COPY tsetup.6.7.5.tar.xz /tmp/telegram.tar.xz
+RUN cd /tmp && \
+    tar -xf telegram.tar.xz && \
+    mv Telegram/ /opt/telegram && \
+    rm telegram.tar.xz && \
+    rm -rf Telegram
 
 # 创建用户
 RUN useradd -m -s /bin/bash telegram && \
