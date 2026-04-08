@@ -45,7 +45,7 @@ RUN ln -s /opt/noVNC/vnc.html /opt/noVNC/index.html
 
 # 下载并安装 Telegram Desktop
 RUN wget --no-check-certificate -O /tmp/Telegram.tar.xz  https://github.com/telegramdesktop/tdesktop/releases/download/v6.7.5/tsetup.6.7.5.tar.xz
-RUN tar -xJf Telegram.tar.xz -C /opt
+RUN tar -xJf /tmp/Telegram.tar.xz -C /opt
 RUN rm -rf /tmp/Telegram.gz
 
 # 创建用户
