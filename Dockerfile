@@ -44,7 +44,7 @@ RUN rm -rf /tmp/noVNC.tar.gz /tmp/websockify.tar.gz
 RUN ln -s /opt/noVNC/vnc.html /opt/noVNC/index.html
 
 # 下载并安装 Telegram Desktop
-RUN wget -O /tmp/Telegram.tar.xz  https://github.com/telegramdesktop/tdesktop/releases/download/v6.7.5/tsetup.6.7.5.tar.xz
+RUN wget --no-check-certificate -O /tmp/Telegram.tar.xz  https://github.com/telegramdesktop/tdesktop/releases/download/v6.7.5/tsetup.6.7.5.tar.xz
 RUN tar -xJf Telegram.tar.xz -C /opt
 RUN rm -rf /tmp/Telegram.gz
 
