@@ -7,42 +7,46 @@ ENV TERM=xterm
 # --- 1. 更新源 ---
 RUN apt-get update
 
-# --- 2. 安装基础工具 (必须先安装 wget 和 ca-certificates) ---
-RUN apt-get install -y --no-install-recommends wget ca-certificates && echo "✅ Base tools installed"
-
-# --- 3. 安装桌面环境 ---
+# --- 2. 安装桌面环境基础 (XFCE4) ---
 RUN apt-get install -y --no-install-recommends xfce4 && echo "✅ XFCE4 installed"
+
+# --- 3. 安装桌面插件 ---
 RUN apt-get install -y --no-install-recommends xfce4-goodies && echo "✅ XFCE4 Goodies installed"
 
-# --- 4. 安装 VNC ---
+# --- 4. 安装 VNC 核心组件 ---
 RUN apt-get install -y --no-install-recommends tigervnc-standalone-server tigervnc-common && echo "✅ TigerVNC installed"
+
+# --- 5. 安装 noVNC (Web端VNC) ---
 RUN apt-get install -y --no-install-recommends novnc python3-websockify && echo "✅ noVNC installed"
 
-# --- 5. 安装其他工具 ---
-RUN apt-get install -y --no-install-recommends dbus-x11 x11-xserver-utils supervisor fonts-wqy-zenhei && echo "✅ Utils & Fonts installed"
+# --- 6. 安装基础工具和字体 (包含 wget!) ---
+RUN apt-get install -y --no-install-recommends \
+    dbus-x11 \
+    x11-xserver-utils \
+    supervisor \
+    fonts-wqy-zenhei \
+    wget \
+    ca-certificates \
+    && echo "✅ Base tools installed"
 
-# --- 6. 安装 Telegram 核心依赖 (精简版) ---
-RUN apt-get install -y --no-install-recommends libgtk-3-0 libx11-xcb1 libxcb-util1 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-sync1 libxcb-xfixes0 libxcb-xinerama0 libxkbcommon-x11-0 libsecret-1-0 && echo "✅ Telegram Dependencies Installed"
-
-# --- 7. 下载并安装 Telegram (修复了下载链接问题) ---
-# 第一步：从 API 获取真实的下载链接
-# 第二步：使用真实链接下载
-# 第三步：解压并清理
+# --- 7. 安装 Telegram (修复版：使用 GitHub 直链) ---
+# 注意：这里使用了 GitHub 的官方发布链接，避免官网跳转链接导致的问题
 RUN mkdir -p /opt/Telegram && \
-    REAL_URL=$(wget -qO- https://telegram.org/dl/desktop/linux | grep -o 'https://[^"]*x64.tar.xz' | head -n 1) && \
-    if [ -z "$REAL_URL" ]; then echo "❌ Failed to get download URL"; exit 1; fi && \
-    echo "Downloading from: $REAL_URL" && \
-    wget -q --show-progress --progress=bar:force -O /tmp/telegram.tar.xz "$REAL_URL" && \
-    tar -xf /tmp/telegram.tar.xz -C /opt/Telegram --strip-components=1 && \
-    rm /tmp/telegram.tar.xz && \
+    wget -q --show-progress --progress=bar:force:noscroll -O /tmp/telegram.tgz https://github.com/telegramdesktop/tdesktop/releases/download/v5.10.2/telegram-5.10.2-linux-x64.tar.xz && \
+    tar --extract --file /tmp/telegram.tgz --strip-components=1 -C /opt/Telegram && \
     ln -sf /opt/Telegram/Telegram /usr/local/bin/telegram-desktop && \
-    echo "✅ Telegram Binary Downloaded & Installed"
+    rm /tmp/telegram.tgz && \
+    echo "✅ Telegram Binary Downloaded"
 
-# --- 8. 清理缓存 ---
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+# --- 8. 安装 Zenity (用于弹窗测试) ---
+RUN apt-get install -y --no-install-recommends zenity && echo "✅ Zenity installed"
 
-# --- 9. 配置启动脚本 ---
-COPY start-vnc.sh /start-vnc.sh
-RUN chmod +x /start-vnc.sh
+# --- 9. 复制启动脚本 (文件名改回 start.sh) ---
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
-CMD ["/start-vnc.sh"]
+# --- 10. 暴露端口 ---
+EXPOSE 5901 6080
+
+# --- 11. 启动命令 ---
+CMD ["/start.sh"]
