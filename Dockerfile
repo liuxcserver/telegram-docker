@@ -42,12 +42,12 @@ RUN apt-get update && \
 
 # 安装 noVNC (使用 wget 替代 git clone，更可靠)
 # 2. 安装 noVNC (拆分为多行命令)
-RUN wget -O /tmp/noVNC.tar.gz https://github.com/novnc/noVNC/archive/refs/heads/master.tar.gz
-RUN tar -xzf /tmp/noVNC.tar.gz -C /opt && mv /opt/noVNC-master /opt/noVNC
-RUN wget -O /tmp/websockify.tar.gz https://github.com/novnc/websockify/archive/refs/heads/master.tar.gz
-RUN tar -xzf /tmp/websockify.tar.gz -C /opt && mv /opt/websockify-master /opt/noVNC/utils/websockify
-RUN rm -rf /tmp/noVNC.tar.gz /tmp/websockify.tar.gz
-RUN ln -s /opt/noVNC/vnc.html /opt/noVNC/index.html
+#RUN wget -O /tmp/noVNC.tar.gz https://github.com/novnc/noVNC/archive/refs/heads/master.tar.gz
+#RUN tar -xzf /tmp/noVNC.tar.gz -C /opt && mv /opt/noVNC-master /opt/noVNC
+#RUN wget -O /tmp/websockify.tar.gz https://github.com/novnc/websockify/archive/refs/heads/master.tar.gz
+#RUN tar -xzf /tmp/websockify.tar.gz -C /opt && mv /opt/websockify-master /opt/noVNC/utils/websockify
+#RUN rm -rf /tmp/noVNC.tar.gz /tmp/websockify.tar.gz
+#RUN ln -s /opt/noVNC/vnc.html /opt/noVNC/index.html
 
 # 下载并安装 Telegram Desktop
 RUN cd /tmp && \
