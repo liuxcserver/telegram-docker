@@ -33,10 +33,6 @@ RUN apt-get update && \
     supervisor && \
     rm -rf /var/lib/apt/lists/*
 
-# 安装 TigerVNC Server
-COPY tigervnc-1.16.2.x86_64.tar.gz /tmp/tigervnc.tar.gz
-RUN tar xz /tmp/tigervnc.tar.gz --strip-components=1 -C /usr/local
-
 # 安装 noVNC (使用 wget 替代 git clone，更可靠)
 # 2. 安装 noVNC (拆分为多行命令)
 COPY noVNC-master.tar.gz /tmp/noVNC.tar.gz
